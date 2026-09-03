@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>NSE AI Intraday Scanner</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #0b0f14;
+            color: white;
+        }
+
+        .header {
+            padding: 18px;
+            text-align: center;
+            background: #111821;
+            border-bottom: 1px solid #26313d;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 22px;
+        }
+
+        .header p {
+            margin: 7px 0 0;
+            color: #9aa7b5;
+            font-size: 13px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: auto;
+            padding: 15px;
+        }
+
+        .scan-btn {
+            width: 100%;
+            padding: 16px;
+            border: 0;
+            border-radius: 12px;
+            background: #2563eb;
+            color: white;
+            font-size: 17px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .scan-btn:active {
+            transform: scale(0.98);
+        }
+
+        .status {
+            margin: 15px 0;
+            padding: 12px;
+            background: #111821;
+            border-radius: 10px;
+            color: #aab6c3;
+            text-align: center;
+        }
+
+        .card {
+            background: #111821;
+            border: 1px solid #26313d;
+            border-radius: 14px;
+            padding: 15px;
+            margin-bottom: 12px;
+        }
+
+        .top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .stock {
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        .signal {
+            font-size: 15px;
+            font-weight: bold;
+            padding: 7px 10px;
+            border-radius: 8px;
+        }
+
+        .buy {
+            color: #22c55e;
+        }
+
+        .sell {
+            color: #ef4444;
+        }
+
+        .wait {
+            color: #facc15;
+        }
+
+        .signal.buy {
+            background: #12351f;
+        }
+
+        .signal.sell {
+            background: #3a1717;
+        }
+
+        .signal.wait {
+            background: #3b3210;
+        }
+
+        .price {
+            margin-top: 12px;
+            font-size: 25px;
+            font-weight: bold;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+            margin-top: 13px;
+        }
+
+        .box {
+            background: #1a222c;
+            border-radius: 9px;
+            padding: 10px;
+        }
+
+        .label {
+            color: #8e9baa;
+            font-size: 12px;
+            margin-bottom: 5px;
+        }
+
+        .value {
+            font-size: 15px;
+            font-weight: bold;
+        }
+
+        .score-bar {
+            margin-top: 13px;
+            height: 8px;
+            background: #29323d;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .score-fill {
+            height: 100%;
+            background: #22c55e;
+        }
+
+        .footer {
+            text-align: center;
+            color: #697583;
+            font-size: 11px;
+            padding: 20px;
+        }
+
+        @media (min-width: 700px) {
+            #results {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 12px;
+            }
+
+            .card {
+                margin-bottom: 0;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="header">
+        <h1>🚀 NSE AI INTRADAY SCANNER</h1>
+        <p>Technical + Volume Market Scanner</p>
+    </div>
+
+    <div class="container">
+
+        <button class="scan-btn" onclick="scanMarket()">
+            🔍 SCAN NSE MARKET
+        </button>
+
+        <div class="status" id="status">
+            Ready to scan
+        </div>
+
+        <div id="results"></div>
+
+    </div>
+
+    <div class="footer">
+        Analysis tool — not financial advice
+    </div>
+
+
+    <script>
+
+        async function scanMarket() {
+
+            const status =
+                document.getElementById("status");
+
+            const results =
+                document.getElementById("results");
+
+            status.innerHTML =
+                "⏳ Scanning NSE stocks... Please wait.";
+
+            results.innerHTML = "";
+
+            try {
+
+                const response =
+                    await fetch("/scan");
+
+                const data =
+                    await response.json();
+
+                status.innerHTML =
+                    "✅ Scanned " +
+                    data.total_scanned +
+                    " stocks • Showing Top " +
+                    data.showing;
+
+                if (!data.results.length) {
+
+                    results.innerHTML =
+                        "<div class='card'>No market data available.</div>";
+
+                    return;
+                }
+
+                data.results.forEach(stock => {
+
+                    let signalClass = "wait";
+
+                    if (stock.signal === "BUY") {
+                        signalClass = "buy";
+                    }
+
+                    if (stock.signal === "SELL") {
+                        signalClass = "sell";
+                    }
+
+                    results.innerHTML += `
+
+                        <div class="card">
+
+                            <div class="top">
+
+                                <div class="stock">
+                                    ${stock.stock}
+                                </div>
+
+                                <div class="signal ${signalClass}">
+                                    ${stock.signal}
+                                </div>
+
+                            </div>
+
+                            <div class="price">
+                                ₹${stock.price}
+                            </div>
+
+                            <div class="grid">
+
+                                <div class="box">
+                                    <div class="label">
+                                        SCORE
+                                    </div>
+
+                                    <div class="value">
+                                        ${stock.score}%
+                                    </div>
+                                </div>
+
+                                <div class="box">
+                                    <div class="label">
+                                        TREND
+                                    </div>
+
+                                    <div class="value">
+                                        ${stock.trend}
+                                    </div>
+                                </div>
+
+                                <div class="box">
+                                    <div class="label">
+                                        RSI
+                                    </div>
+
+                                    <div class="value">
+                                        ${stock.rsi}
+                                    </div>
+                                </div>
+
+                                <div class="box">
+                                    <div class="label">
+                                        VOLUME
+                                    </div>
+
+                                    <div class="value">
+                                        ${stock.volume}x
+                                    </div>
+                                </div>
+
+                                <div class="box">
+                                    <div class="label">
+                                        STOP LOSS
+                                    </div>
+
+                                    <div class="value">
+                                        ₹${stock.stop_loss}
+                                    </div>
+                                </div>
+
+                                <div class="box">
+                                    <div class="label">
+                                        TARGET
+                                    </div>
+
+                                    <div class="value">
+                                        ₹${stock.target}
+                                    </div>
+                                </div>
+
+                            </div>
+
+                            <div class="score-bar">
+                                <div
+                                    class="score-fill"
+                                    style="width:${stock.score}%">
+                                </div>
+                            </div>
+
+                        </div>
+
+                    `;
+
+                });
+
+            } catch (error) {
+
+                status.innerHTML =
+                    "❌ Scanner error. Please try again.";
+
+                console.log(error);
+
+            }
+
+        }
+
+    </script>
+
+</body>
+
+</html>
